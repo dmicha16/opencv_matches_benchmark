@@ -1,13 +1,10 @@
 #pragma once
-#pragma warning(disable : 4996)
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <algorithm>
 #include <filesystem>
-#include <cstdlib>
-#include <ctime>
-#include <vector>
+#include "Logger.h"
 
 #include "opencv2/opencv_modules.hpp"
 #include <opencv2/features2d/features2d.hpp>
@@ -26,7 +23,9 @@
 #include "opencv2/stitching/warpers.hpp"
 #include "opencv2/core/ocl.hpp"
 
-#include "clogging/Logger.h"
+#include <opencv2/core/core.hpp>
+#include "opencv2/imgproc/imgproc.hpp"
+#include <vector>
 
 #pragma region namespaces
 using namespace std;
@@ -38,29 +37,16 @@ using namespace cv::detail;
 #define WINPAUSE system("pause")
 #endif
 
-enum ResultsType {ORB_R = 1, AKAZE_R = 2, BRISK_R = 3};
+#define OUTPUT_TRUE 1
+#define ENABLE_LOG 1
+#define LOG(msg) std::cout << msg
+#define LOGLN(msg) std::cout << msg << std::endl
 
-struct ImageParams {
-	vector<Mat> images;
-	vector<ImageFeatures> image_features;
-	vector<MatchesInfo> pairwise_matches;
-	string matcher_type;
-	int image_index;
-	ResultsType results_type;
-};
-
-class Benchmark {
+class Wrapper {
 public:
 	INIT_CLOGGING;
-	Benchmark();
-	~Benchmark();
-	void draw_keypoints(vector<Mat> images, vector<ImageFeatures> image_features, vector<MatchesInfo> pairwise_matches);	
-	void matcher(ImageParams image_params);
-
-private:
-	float calculate_deviation_(float avarage, vector<float> distances, int num_below_thresh);
-	string construct_file_name_(string matcher_type, ResultsType results_type, int image_index);
-	void draw_matches_(ImageParams image_params);
-	void threshold_calculator_(const ImageParams image_params);
+	Wrapper();
+	~Wrapper();
 };
 
+ 

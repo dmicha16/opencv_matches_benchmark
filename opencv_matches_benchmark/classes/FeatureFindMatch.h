@@ -1,6 +1,8 @@
 #pragma once
 #include "Wrapper.h"
 #include "RoiCalculator.h"
+#include "Stitcher.h"
+#include "Warping.h"
 
 typedef struct ImageData {
 	Mat img_1, img_2;
@@ -16,6 +18,8 @@ typedef struct DesiredRect {
 	
 };
 
+typedef enum Cases {LOW = 0, MEDIUM = 1, HIGH = 2};
+
 class FeatureFindMatch :
 	public Wrapper {
 public:
@@ -23,7 +27,7 @@ public:
 	~FeatureFindMatch();
 
 	void set_rectangle_info(int rows, int columns, float overlap, int desired_occupied);
-	void find_features(const vector<Mat> inc_images, const float inc_threshold);
+	void find_features(const vector<Mat> inc_images);
 	MatchedKeyPoint get_matched_coordinates();
 private:
 
@@ -34,14 +38,16 @@ private:
 	MatchedKeyPoint matched_keypoints_;
 	ImageData image_data_;
 	DesiredRect desired_rectangle_;
+	//FilteredKeyPoints filtered_keypoints_;
+	MatchedKeyPoint keypoints_by_percentage_[4];
+
+	Stitcher stitcher_;
+	Warping warper_;
 	
 	void filter_matches_(const vector<Mat> inc_images);
-	bool keypoint_area_check_(vector<Mat> inc_images, int desired_occ_rects);
+	bool keypoint_area_check_(vector<Mat> inc_images);
 	void match_features_(const vector<Mat> inc_images, const vector<ImageFeatures> strict_features);
 	int calculate_treshold_(vector<DMatch> matches, float desired_percentage);
-	void matches_drawer_(vector<DMatch> good_matches);
-	void display_pairwise_matches_(const vector<MatchesInfo> pairwise_matches);
-
-	//vector<Mat> createImageSubset(vector<ImageFeatures> &strict_features, vector<MatchesInfo> pairwise_matches, vector<Mat> images);
+	void matches_drawer_(vector<DMatch> good_matches);		
 };
 

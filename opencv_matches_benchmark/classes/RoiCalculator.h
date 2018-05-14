@@ -40,18 +40,26 @@ typedef struct RowDefiner {
 	Point2f top_left;
 };
 
+typedef struct MatchedKeyPoint {
+	vector<Point2f> image_1;
+	vector<Point2f> image_2;
+};
+
 typedef struct Rectengales {
 	vector<Rect> rectangles;
 	vector<RowDefiner> row_definitions;
+	vector<KeyPointList> keypoint_list;
+	void populate_keypoint_list(MatchedKeyPoint matched_keypoints);
 	void desginate_rectangles(int desired_rect);
 	void populate_rectangles(int height_offset, int desired_cols);
 	void reset_rectangles();
 };
 
-typedef struct MatchedKeyPoint {
-	vector<Point2f> image_1;
+typedef struct KeyPointList {
 	vector<Point2f> image_2;
 };
+
+typedef enum RectangleCases { PER16 = 0, PER32 = 1, PER48 = 2, PER64 = 3, PER80 = 4 };
 
 class RoiCalculator {
 
@@ -75,7 +83,7 @@ private:
 
 	RowDefiner populate_row_definer_(int img_width, unsigned int start_height, int offset);
 	vector<RowDefiner> row_definitions_;
-
+	void rectangle_cases();
 	void write_roi_(float min_height);
 };
 

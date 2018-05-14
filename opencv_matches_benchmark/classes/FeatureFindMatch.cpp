@@ -12,9 +12,9 @@ FeatureFindMatch::FeatureFindMatch() {
 FeatureFindMatch::~FeatureFindMatch() {
 }
 
-void FeatureFindMatch::find_features(const vector<Mat> inc_images, const float inc_threshold) {
+void FeatureFindMatch::find_features(const vector<Mat> inc_images) {
 
-	threshold_ = inc_threshold;
+	threshold_ = 1;
 	num_images_ = static_cast <int>(inc_images.size());
 	image_features_.resize(num_images_);
 	string features_out;
@@ -30,41 +30,26 @@ void FeatureFindMatch::find_features(const vector<Mat> inc_images, const float i
 
 	InputArray mask = noArray();
 	Ptr<ORB> detector_desciptor;
-	detector_desciptor = ORB::create(50000, scaleFactor, nlevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize, fastThreshold);
-
-	vector<Mat> local_image_holder;
-	Mat temp_image_holder;
-	for (size_t i = 0; i < inc_images.size(); i++)
-		local_image_holder.push_back(inc_images[i]);	
-
-	if (inc_images[0].rows > inc_images[1].rows) {
-		temp_image_holder = local_image_holder[0];
-		temp_image_holder.resize(inc_images[1].rows);
-		local_image_holder[0] = temp_image_holder;
-
-		temp_image_holder.empty();
-	}
+	detector_desciptor = ORB::create(150000, scaleFactor, nlevels, edgeThreshold, 
+		firstLevel, WTA_K, scoreType, patchSize, fastThreshold);	
 
 	for (int i = 0; i < num_images_; ++i) {
 
 		features_out = "Features in image #";
 
 		try {
-			detector_desciptor->detectAndCompute(local_image_holder[i], mask, image_features_[i].keypoints, image_features_[i].descriptors);
+			detector_desciptor->detectAndCompute(inc_images[i], mask,
+				image_features_[i].keypoints, image_features_[i].descriptors);
 		}
 		catch (const std::exception& e) {
 			cout << e.what() << endl;
-		}
-
-		cout << "image 1 size at features finding: " << local_image_holder[0].size << endl;
-		cout << "image 2 size at features finding: " << local_image_holder[1].size << endl;
+		}		
 
 		image_features_[i].img_idx = i;
 		features_out += to_string(i + 1) + ": " + to_string(image_features_[i].keypoints.size());		
 		LOGLN(features_out);
 
-	}
-	local_image_holder.clear();
+	}	
 	match_features_(inc_images, image_features_);
 }
 
@@ -72,18 +57,39 @@ MatchedKeyPoint FeatureFindMatch::get_matched_coordinates() {
 	return matched_keypoints_;
 }
 
-bool FeatureFindMatch::keypoint_area_check_(vector<Mat> inc_images, int desired_occ_rects) {
+bool FeatureFindMatch::keypoint_area_check_(vector<Mat> inc_images) {
 
-	RoiCalculator roi_calculator;
-	roi_calculator.set_image(inc_images[1]);
-	roi_calculator.set_matched_keypoints(matched_keypoints_);
-	roi_calculator.calculate_roi(desired_rectangle_.columns,
-		desired_rectangle_.rows, desired_rectangle_.image_overlap);
+	desired_rectangle_.image_overlap = 0.8;
 
-	if (roi_calculator.num_occupied_rects() >= desired_occ_rects)
-		return true;
-	else
-		return false;
+	for (size_t i = 0; i < 3; i++) {
+
+		switch (i) {
+		case Cases::LOW:
+			desired_rectangle_.columns = 3;
+			desired_rectangle_.rows = 2;			
+			break;
+		case Cases::MEDIUM:
+			desired_rectangle_.columns = 6;
+			desired_rectangle_.rows = 4;
+			break;
+		case Cases::HIGH:
+			desired_rectangle_.columns = 12;
+			desired_rectangle_.rows = 8;
+			break;
+		}
+		
+		RoiCalculator roi_calculator;
+		roi_calculator.set_image(inc_images[1]);
+
+		for (size_t j = 0; j < 4; j++) {
+			roi_calculator.set_matched_keypoints(keypoints_by_percentage_[j]);
+			roi_calculator.calculate_roi(desired_rectangle_.columns,
+				desired_rectangle_.rows, desired_rectangle_.image_overlap);
+		}	
+
+		desired_rectangle_.columns = 0;
+		desired_rectangle_.rows = 0;
+	}
 }
 
 void FeatureFindMatch::match_features_(const vector<Mat> inc_images, const vector<ImageFeatures> image_features_) {
@@ -121,9 +127,10 @@ void FeatureFindMatch::match_features_(const vector<Mat> inc_images, const vecto
 		WINPAUSE;
 	}
 
-	image_data_.all_matches = pairwise_matches[1].matches;	
-	//display_pairwise_matches_(pairwise_matches);
+	image_data_.all_matches = pairwise_matches[1].matches;
+	
 	filter_matches_(inc_images);
+	keypoint_area_check_(inc_images);
 	
 	current_matcher->collectGarbage();
 }
@@ -135,45 +142,30 @@ void FeatureFindMatch::filter_matches_(const vector<Mat> inc_images) {
 	int calculated_threshold = 0;
 	int desirec_occupied_rects = desired_rectangle_.desired_occupied;
 
-	do {
-		calculated_threshold = 0;
-		matched_keypoints_.image_1.clear();
-		matched_keypoints_.image_2.clear();
-		filtered_matches.clear();
+	for (float i = 0.1; i < 0.5; i += 0.1) {
 
-		calculated_threshold = calculate_treshold_(image_data_.all_matches, threshold_);
-		//cout << "calculated_threshold: " << calculated_threshold << endl;
+		calculated_threshold = calculate_treshold_(image_data_.all_matches, i);
 
-		for (size_t i = 0; i < image_data_.all_matches.size(); i++) {
+		for (size_t j = 0; j < image_data_.all_matches.size(); j++) {
 
-			if (image_data_.all_matches[i].distance <= calculated_threshold)
+			if (image_data_.all_matches[j].distance <= calculated_threshold)
 				filtered_matches.push_back(image_data_.all_matches[i]);
 		}
-		//cout << "filtered_matches.size: " << filtered_matches.size() << endl;
 
-		matched_keypoints_.image_1.resize(filtered_matches.size());
-		matched_keypoints_.image_2.resize(filtered_matches.size());
+		int idx = i * 10 - 1;
+
+		keypoints_by_percentage_[idx].image_1.resize(filtered_matches.size());
+		keypoints_by_percentage_[idx].image_2.resize(filtered_matches.size());
 
 		for (size_t i = 0; i < filtered_matches.size(); i++) {
-			matched_keypoints_.image_1[i].x = (image_data_.keypoints_1[filtered_matches[i].queryIdx].pt.x);
-			matched_keypoints_.image_1[i].y = (image_data_.keypoints_1[filtered_matches[i].queryIdx].pt.y);
 
-			matched_keypoints_.image_2[i].x = (image_data_.keypoints_2[filtered_matches[i].trainIdx].pt.x);
-			matched_keypoints_.image_2[i].y = (image_data_.keypoints_2[filtered_matches[i].trainIdx].pt.y);
-			//cout << matched_keypoints_.image_1[i] << endl;
-			//cout << matched_keypoints_.image_2[i] << endl;
+			keypoints_by_percentage_[idx].image_1[i].x = (image_data_.keypoints_1[filtered_matches[i].queryIdx].pt.x);
+			keypoints_by_percentage_[idx].image_1[i].y = (image_data_.keypoints_1[filtered_matches[i].queryIdx].pt.y);
+
+			keypoints_by_percentage_[idx].image_2[i].x = (image_data_.keypoints_2[filtered_matches[i].trainIdx].pt.x);
+			keypoints_by_percentage_[idx].image_2[i].y = (image_data_.keypoints_2[filtered_matches[i].trainIdx].pt.y);
 		}
-
-		enough_occupied = keypoint_area_check_(inc_images, desirec_occupied_rects);
-		/*cout << "enough occupied: " << boolalpha << enough_occupied << endl;		
-		cout << "current_threshold: " << calculated_threshold << endl;
-		cout << "threshold_: " << threshold_ << endl;*/
-		threshold_ += 0.1;
-
-	} while ((!enough_occupied) && (threshold_ <= 1));
-
-	cout << "Threshold has been set to: " << threshold_ << endl;	
-	cout << "Good matches #:" << filtered_matches.size() << endl;
+	}
 	
 	//matches_drawer_(filtered_matches);
 }
@@ -209,25 +201,6 @@ void FeatureFindMatch::matches_drawer_(vector<DMatch> filtered_matches) {
 
 	imwrite(output_location, output_img);
 }
-
-void FeatureFindMatch::display_pairwise_matches_(const vector<MatchesInfo> pairwise_matches) {
-
-	cout << "\n-----------------------------" << endl;
-	cout << "display_pairwise_matches_() {" << endl;
-	cout << "\t-------------------" << endl;
-
-	for (size_t i = 1; i < pairwise_matches.size() - 1; i++) {
-		cout << "\tdst_img_indx: " << pairwise_matches[i].dst_img_idx << endl;
-		cout << "\tconfidence: " << pairwise_matches[i].confidence << endl;
-		cout << "\tH: " << pairwise_matches[i].H << endl;
-		//cout << "inliers_mask[i]: " << pairwise_matches[i].inliers_mask[i] << endl;
-		cout << "\tnum_inliers: " << pairwise_matches[i].num_inliers << endl;
-		cout << "\t-------------------" << endl;
-	}
-	cout << "}" << endl;
-	cout << "-----------------------------" << endl << endl;
-}
-
 
 void FeatureFindMatch::set_rectangle_info(int rows, int columns, float overlap, int desired_occupied) {
 	desired_rectangle_.rows = rows;

@@ -1,10 +1,11 @@
+#include "../stdafx.h"
 #pragma once
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <algorithm>
 #include <filesystem>
-#include "Logger.h"
+#include "../clogging/Logger.h"
 
 #include "opencv2/opencv_modules.hpp"
 #include <opencv2/features2d/features2d.hpp>

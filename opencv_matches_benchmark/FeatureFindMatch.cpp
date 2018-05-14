@@ -79,10 +79,10 @@ bool FeatureFindMatch::keypoint_area_check_(vector<Mat> inc_images) {
 		}
 		
 		RoiCalculator roi_calculator;
-		roi_calculator.set_image(inc_images[1]);
+		roi_calculator.set_image(inc_images[0], inc_images[1]);
 
 		for (size_t j = 0; j < 4; j++) {
-			roi_calculator.set_matched_keypoints(keypoints_by_percentage_[j]);
+			roi_calculator.set_matched_keypoints(keypoints_by_percentage_[j], j);
 			roi_calculator.calculate_roi(desired_rectangle_.columns,
 				desired_rectangle_.rows, desired_rectangle_.image_overlap);
 		}	

@@ -1,4 +1,5 @@
 #pragma once
+#include "../stdafx.h"
 #include "Wrapper.h"
 #include "RoiCalculator.h"
 #include "Stitcher.h"
@@ -50,4 +51,3 @@ private:
 	int calculate_treshold_(vector<DMatch> matches, float desired_percentage);
 	void matches_drawer_(vector<DMatch> good_matches);		
 };
-

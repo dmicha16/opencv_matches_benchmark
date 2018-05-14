@@ -1,3 +1,4 @@
+#include "../stdafx.h"
 #pragma once
 #include <iostream>
 #include <fstream>
@@ -23,6 +24,9 @@
 #include "opencv2/stitching/detail/warpers.hpp"
 #include "opencv2/stitching/warpers.hpp"
 #include "opencv2/core/ocl.hpp"
+
+#include "Warping.h"
+#include "Stitcher.h"
 
 #pragma region namespaces
 using namespace std;
@@ -67,23 +71,26 @@ public:
 	RoiCalculator();
 	~RoiCalculator();
 
-	void set_image(Mat inc_image);
+	void set_image(Mat inc_image_1, Mat inc_image);
 	void calculate_roi(int desired_cols, int desired_rows, float overlap);
 	bool check_keypoint();
-	void set_matched_keypoints(MatchedKeyPoint inc_matched_keypoints);
+	void set_matched_keypoints(MatchedKeyPoint inc_matched_keypoints, int threshold_percentage);
 	int num_occupied_rects();
 
 private:
 	int num_rect_;
 	Mat image_;
+	Mat image_1_;
 	int num_images_;
+	int threshold_percentage_;
 
 	Rectengales rectangles_s_;	
 	MatchedKeyPoint matched_keypoints_;
 
 	RowDefiner populate_row_definer_(int img_width, unsigned int start_height, int offset);
 	vector<RowDefiner> row_definitions_;
-	void rectangle_cases();
+	void rectangle_cases_(int desired_cols);
 	void write_roi_(float min_height);
+	vector<KeyPointList> sort_keypoints_list_(vector<KeyPointList> inc_list);
 };
 

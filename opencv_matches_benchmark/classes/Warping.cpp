@@ -1,4 +1,3 @@
-#include "../stdafx.h"
 #include "Warping.h"
 #include <opencv2/opencv.hpp>
 

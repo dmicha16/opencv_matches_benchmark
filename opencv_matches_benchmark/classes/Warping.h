@@ -1,4 +1,3 @@
-#include "../stdafx.h"
 #pragma once
 #include "Wrapper.h"
 #include "FeatureFindMatch.h"

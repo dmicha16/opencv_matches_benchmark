@@ -1,5 +1,4 @@
 #pragma once
-#include "../stdafx.h"
 #include "Wrapper.h"
 #include "RoiCalculator.h"
 #include "Stitcher.h"

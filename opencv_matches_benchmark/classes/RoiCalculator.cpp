@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "RoiCalculator.h"
 
 struct SortOperator {
@@ -36,7 +35,7 @@ void RoiCalculator::calculate_roi(int desired_cols, int desired_rows, float over
 	float min_height = (img_height * overlap);
 
 	rectangles_s_.populate_keypoint_list(matched_keypoints_);
-	rectangle_cases_();
+	//rectangle_cases_();
 
 
 	//write_roi_(min_height);
@@ -183,10 +182,10 @@ vector<KeyPointList> RoiCalculator::sort_keypoints_list_(vector<KeyPointList> in
 
 		int counter = 0;
 		for (int j = i; j < temp_list.size(); j++) {
-			if (temp_list[j].image_2.size() > temp_point_holder ) {
+			/*if (temp_list[j].image_2.size() > temp_point_holder ) {
 				temp_point_holder = temp_list[j].image_2;
 				counter = j;		
-			}
+			}*/
 		}
 
 		iter_swap(temp_list.begin() + i, temp_list.begin() + counter);

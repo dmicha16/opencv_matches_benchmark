@@ -1,5 +1,4 @@
 #pragma once
-
 #include <time.h>
 #include <string>
 #include <string.h>
@@ -11,7 +10,7 @@
 #include <map>
 #include <chrono>
 #include <thread>
-#include "json.hpp"
+#include "../clogging/json.hpp"
 #pragma warning(disable : 4996) //Visual studio error suppress
 
 

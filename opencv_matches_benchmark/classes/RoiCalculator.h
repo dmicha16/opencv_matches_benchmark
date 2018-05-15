@@ -1,4 +1,3 @@
-#include "../stdafx.h"
 #pragma once
 #include <iostream>
 #include <fstream>

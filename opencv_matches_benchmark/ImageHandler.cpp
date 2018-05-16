@@ -29,7 +29,7 @@ void ImageHandler::read_images_(string path) {
 	glob(path, photos, false);
 
 	cout << "Images read: " << photos.size() << endl;
-	WINPAUSE;
+	//WINPAUSE;
 	for (int i = 0; i < photos.size(); i++) {
 		img_names_.push_back(photos[i]);
 	}

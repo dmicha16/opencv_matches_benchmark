@@ -44,7 +44,7 @@ private:
 	
 	void filter_matches_(const vector<Mat> inc_images);
 	bool keypoint_area_check_(vector<Mat> inc_images);
-	void match_features_(const vector<Mat> inc_images, const vector<ImageFeatures> strict_features);
+	void match_features_(const vector<Mat> inc_images);
 	int calculate_treshold_(vector<DMatch> matches, float desired_percentage);
 	void matches_drawer_(vector<DMatch> good_matches);		
 };

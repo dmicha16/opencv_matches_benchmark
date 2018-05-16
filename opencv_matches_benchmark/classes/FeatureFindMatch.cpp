@@ -26,7 +26,7 @@ void FeatureFindMatch::find_features(const vector<Mat> inc_images) {
 	int WTA_K = 2;
 	int scoreType = ORB::HARRIS_SCORE;
 	int patchSize = 31;
-	int fastThreshold = 20;
+	int fastThreshold = 20;	
 
 	InputArray mask = noArray();
 	Ptr<ORB> detector_desciptor;
@@ -35,7 +35,7 @@ void FeatureFindMatch::find_features(const vector<Mat> inc_images) {
 
 	for (int i = 0; i < num_images_; ++i) {
 
-		features_out = "Features in image #";
+		features_out = "Features in image ";
 
 		try {
 			detector_desciptor->detectAndCompute(inc_images[i], mask,
@@ -49,8 +49,14 @@ void FeatureFindMatch::find_features(const vector<Mat> inc_images) {
 		features_out += to_string(i + 1) + ": " + to_string(image_features_[i].keypoints.size());		
 		LOGLN(features_out);
 
-	}	
-	match_features_(inc_images, image_features_);
+	}
+	//for (size_t j = 0; j < image_features_[1].keypoints.size(); j++) {
+	//	LOGLN("Features img2: " << image_features_[1].keypoints[j].pt);
+	//	/*string msg = "Features img2: " + to_string(image_features_[1].keypoints[j].pt.x) + " " + to_string(image_features_[1].keypoints[j].pt.y);
+	//	CLOG(msg);*/
+	//}	
+
+	match_features_(inc_images);
 }
 
 MatchedKeyPoint FeatureFindMatch::get_matched_coordinates() {
@@ -77,6 +83,9 @@ bool FeatureFindMatch::keypoint_area_check_(vector<Mat> inc_images) {
 			desired_rectangle_.rows = 8;
 			break;
 		}
+
+		LOGLN("Desired columns: " << desired_rectangle_.columns);
+		LOGLN("Desired rows: " << desired_rectangle_.rows);
 		
 		RoiCalculator roi_calculator;
 		roi_calculator.set_image(inc_images[0], inc_images[1]);
@@ -89,11 +98,11 @@ bool FeatureFindMatch::keypoint_area_check_(vector<Mat> inc_images) {
 
 		desired_rectangle_.columns = 0;
 		desired_rectangle_.rows = 0;
-	}
+	}	
 	return true;
 }
 
-void FeatureFindMatch::match_features_(const vector<Mat> inc_images, const vector<ImageFeatures> image_features_) {
+void FeatureFindMatch::match_features_(const vector<Mat> inc_images) {
 
 	float match_conf = 0.3f;
 	bool try_cuda = false;
@@ -129,6 +138,10 @@ void FeatureFindMatch::match_features_(const vector<Mat> inc_images, const vecto
 	}
 
 	image_data_.all_matches = pairwise_matches[1].matches;
+
+	LOGLN("Matches found: " << image_data_.all_matches.size());
+	/*matches_drawer_(image_data_.all_matches);
+	WINPAUSE;*/
 	
 	filter_matches_(inc_images);
 	keypoint_area_check_(inc_images);
@@ -145,28 +158,39 @@ void FeatureFindMatch::filter_matches_(const vector<Mat> inc_images) {
 
 	for (float i = 0.1; i < 0.5; i += 0.1) {
 
-		calculated_threshold = calculate_treshold_(image_data_.all_matches, i);
+		calculated_threshold = calculate_treshold_(image_data_.all_matches, i);		
 
 		for (size_t j = 0; j < image_data_.all_matches.size(); j++) {
 
 			if (image_data_.all_matches[j].distance <= calculated_threshold)
-				filtered_matches.push_back(image_data_.all_matches[i]);
+				filtered_matches.push_back(image_data_.all_matches[j]);
 		}
 
 		int idx = i * 10 - 1;
+		/*if (idx == 0) {
+			for (size_t z = 0; z < filtered_matches.size(); z++) {
+				LOGLN("filtered_matches z: " << z << " " << image_data_.keypoints_2[filtered_matches[z].trainIdx].pt);
+			}
+		}*/
 
 		keypoints_by_percentage_[idx].image_1.resize(filtered_matches.size());
 		keypoints_by_percentage_[idx].image_2.resize(filtered_matches.size());
 
-		for (size_t i = 0; i < filtered_matches.size(); i++) {
+		//LOGLN("Filtered matches size: " << filtered_matches.size());
 
-			keypoints_by_percentage_[idx].image_1[i].x = (image_data_.keypoints_1[filtered_matches[i].queryIdx].pt.x);
-			keypoints_by_percentage_[idx].image_1[i].y = (image_data_.keypoints_1[filtered_matches[i].queryIdx].pt.y);
+		for (size_t k = 0; k < filtered_matches.size(); k++) {
 
-			keypoints_by_percentage_[idx].image_2[i].x = (image_data_.keypoints_2[filtered_matches[i].trainIdx].pt.x);
-			keypoints_by_percentage_[idx].image_2[i].y = (image_data_.keypoints_2[filtered_matches[i].trainIdx].pt.y);
+			keypoints_by_percentage_[idx].image_2[k].x = (image_data_.keypoints_1[filtered_matches[k].queryIdx].pt.x);
+			keypoints_by_percentage_[idx].image_2[k].y = (image_data_.keypoints_1[filtered_matches[k].queryIdx].pt.y);
+
+			keypoints_by_percentage_[idx].image_1[k].x = (image_data_.keypoints_2[filtered_matches[k].trainIdx].pt.x);
+			keypoints_by_percentage_[idx].image_1[k].y = (image_data_.keypoints_2[filtered_matches[k].trainIdx].pt.y);
 		}
+		//LOGLN("Populated keypoints: " << i << " " << keypoints_by_percentage_[i].image_2);
 	}
+	/*for (size_t i = 0; i < keypoints_by_percentage_[0].image_2.size(); i++) {
+		LOGLN("Keypoints by percentage: " << i << " " << keypoints_by_percentage_[0].image_2[i]);
+	}*/
 	
 	//matches_drawer_(filtered_matches);
 }
@@ -187,13 +211,18 @@ int FeatureFindMatch::calculate_treshold_(vector<DMatch> my_matches, float desir
 
 	avarage = avarage / my_matches.size();
 
+	//for (size_t i = 0; i < my_matches.size(); i++) {
+	//	//LOGLN("Keypoints by percentage: " << i << " " << my_matches[i].queryIdx);
+	//	LOGLN("my_matches: " << i << " " << my_matches[i].);
+	//}
+
 	calculated_tresh = distances[(int)distances.size() * desired_percentage];
 	return calculated_tresh;
 }
 
 void FeatureFindMatch::matches_drawer_(vector<DMatch> filtered_matches) {
 
-	String output_location = "../opencv_image_stitching/Images/Results/test_1.jpg";
+	String output_location = "../opencv_matches_benchmark/images/results/test_2.jpg";
 	vector<char> mask(filtered_matches.size(), 1);
 	Mat output_img;
 	
@@ -201,6 +230,7 @@ void FeatureFindMatch::matches_drawer_(vector<DMatch> filtered_matches) {
 		Scalar::all(-1), mask, DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
 	imwrite(output_location, output_img);
+	exit(0);
 }
 
 void FeatureFindMatch::set_rectangle_info(int rows, int columns, float overlap, int desired_occupied) {

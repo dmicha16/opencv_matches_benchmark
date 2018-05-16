@@ -29,33 +29,31 @@ void RoiCalculator::calculate_roi(int desired_cols, int desired_rows, float over
 	float min_height = (img_height * overlap);
 
 	rectangles_s_.populate_keypoint_list(matched_keypoints_);
-	//rectangle_cases_();
-
-
 	//write_roi_(min_height);
+	rectangle_cases_(desired_cols);	
 }
 
-bool RoiCalculator::check_keypoint() {
-
-	for (size_t i = 0; i < num_images_; i++) {
-		for (size_t j = 0; j < num_rect_; j++) {
-			if (i == 1) {
-				for (size_t k = 0; k < matched_keypoints_.image_1.size(); k++) {
-					if (rectangles_s_.rectangles[j].contains(matched_keypoints_.image_1[k])) {
-						
-					}
-				}
-			}
-			else {
-				for (size_t k = 0; i < matched_keypoints_.image_2.size(); k++) {
-
-				}
-			}
-		}
-	}
-
-	return false;
-}
+//bool RoiCalculator::check_keypoint() {
+//
+//	for (size_t i = 0; i < num_images_; i++) {
+//		for (size_t j = 0; j < num_rect_; j++) {
+//			if (i == 1) {
+//				for (size_t k = 0; k < matched_keypoints_.image_1.size(); k++) {
+//					if (rectangles_s_.rectangles[j].contains(matched_keypoints_.image_1[k])) {
+//						
+//					}
+//				}
+//			}
+//			else {
+//				for (size_t k = 0; i < matched_keypoints_.image_2.size(); k++) {
+//
+//				}
+//			}
+//		}
+//	}
+//
+//	return false;
+//}
 
 void RoiCalculator::rectangle_cases_(int desired_cols) {
 
@@ -70,30 +68,31 @@ void RoiCalculator::rectangle_cases_(int desired_cols) {
 
 		switch (i) {
 		case PER16:
-			rect_percent = 0.16;
+			rect_percent = 0.17;
 			break;
 		case PER32:
-			rect_percent = 0.32;
+			rect_percent = 0.34;
 			break;
 		case PER48:
-			rect_percent = 0.48;
+			rect_percent = 0.51;
 			break;
 		case PER64:
-			rect_percent = 0.64;
+			rect_percent = 0.68;
 			break;
 		case PER80:
-			rect_percent = 0.80;
+			rect_percent = 0.85;
 			break;
 		}
 
-		rect_number = rectangles_s_.rectangles.size() * rect_percent;
+		rect_number = rectangles_s_.rectangles.size() * rect_percent;		
+
+		LOGLN("rect number: " << rect_number);
 
 		for (size_t j = 0; j < rect_number; j++) {
 			for (size_t k = 0; k < sorted_keypoint_list[j].image_2.size(); k ++) {
 				shuffled_keypoints.image_2.push_back(sorted_keypoint_list[j].image_2[k]);
 			}
 		}
-
 
 		for (size_t i = 0; i < shuffled_keypoints.image_2.size(); i++) {
 			for (size_t j = 0; j < matched_keypoints_.image_2.size(); j++) {
@@ -108,6 +107,9 @@ void RoiCalculator::rectangle_cases_(int desired_cols) {
 
 		Warping warper;
 		Stitcher stitcher;
+
+		LOGLN("shuffled_keypoints img1 size: " << shuffled_keypoints.image_1.size());
+		LOGLN("shuffled_keypoints img2 size: " << shuffled_keypoints.image_2.size());
 
 		Mat warped_img = warper.warp(image_1_, shuffled_keypoints);
 		Mat stitched_img = stitcher.customMerger(image_, warped_img);
@@ -141,7 +143,7 @@ void RoiCalculator::rectangle_cases_(int desired_cols) {
 
 void RoiCalculator::write_roi_(float min_height) {
 
-	String output_location = "../opencv_image_stitching/Images/Results/roi.jpg"; 
+	String output_location = "../opencv_matches_benchmark/images/results/roi1.jpg"; 
 	Point coord_to_display;
 
 	for (size_t i = 0; i < rectangles_s_.rectangles.size(); i++)
@@ -161,14 +163,18 @@ void RoiCalculator::write_roi_(float min_height) {
 		coord_to_display.y = 0;
 	}
 	
-	imwrite(output_location, image_);		
+	imwrite(output_location, image_);
+	exit(0);
 }
 
-/************************* TO FUCKING DO *************************/
 vector<KeyPointList> RoiCalculator::sort_keypoints_list_(vector<KeyPointList> inc_list) {
 
-	vector<KeyPointList> temp_list = inc_list;
-	vector<Point2f> temp_point_holder;
+	vector<KeyPointList> temp_list = inc_list;	
+	vector<Point2f> temp_point_holder;	
+
+	for (size_t i = 0; i < temp_list.size(); i++) {
+		LOGLN("temp list size before: " << i << " " << temp_list[i].image_2.size());
+	}	
 	
 	for (int i = 0; i < temp_list.size(); i++) {
 
@@ -184,9 +190,11 @@ vector<KeyPointList> RoiCalculator::sort_keypoints_list_(vector<KeyPointList> in
 
 		iter_swap(temp_list.begin() + i, temp_list.begin() + counter);
 	}
-
-
-	throw std::invalid_argument("finish this");
+	
+	for (size_t i = 0; i < temp_list.size(); i++) {
+		LOGLN("temp list size after sort: " << i << " " << temp_list[i].image_2.size());
+	}
+	WINPAUSE;
 	return temp_list;
 }
 
@@ -258,11 +266,16 @@ RowDefiner RoiCalculator::populate_row_definer_(int img_width, unsigned int star
 void RoiCalculator::set_image(Mat inc_image_1, Mat inc_image) {
 	image_ = inc_image;
 	image_1_ = inc_image_1;
+	LOGLN("RoiCalculator::Images set.");
 }
 
 void RoiCalculator::set_matched_keypoints(MatchedKeyPoint inc_matched_keypoints, int threshold_percentage) {
 	matched_keypoints_ = inc_matched_keypoints;
 	threshold_percentage_ = (threshold_percentage + 1) * 10;
+	LOGLN("RoiCalculator::Keypoints set.");
+	LOGLN("Matched keypoints img1 size: " << matched_keypoints_.image_1.size());
+	LOGLN("Matched keypoints img2 size: " << matched_keypoints_.image_2.size());
+	LOGLN("RoiCalculator::threshold_percentage: " << threshold_percentage_);
 }
 
 void Rectengales::populate_rectangles(int height_offset, int desired_cols) {
@@ -291,9 +304,9 @@ void Rectengales::reset_rectangles() {
 	rectangles.clear();
 }
 
-void Rectengales::populate_keypoint_list(MatchedKeyPoint matched_keypoints) {
+void Rectengales::populate_keypoint_list(MatchedKeyPoint matched_keypoints) {	
 
-	Point2f coord_to_check;
+	Point2f coord_to_check;	
 
 	for (size_t i = 0; i < matched_keypoints.image_2.size(); i++) {
 
@@ -303,7 +316,7 @@ void Rectengales::populate_keypoint_list(MatchedKeyPoint matched_keypoints) {
 		for (size_t j = 0; j < keypoint_list.size(); j++) {
 			
 			if (rectangles[j].contains(coord_to_check)) {
-				keypoint_list[j].image_2.push_back(coord_to_check);
+				keypoint_list[j].image_2.push_back(coord_to_check);				
 				break;
 			}
 		}

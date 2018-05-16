@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Logger.h"
 
 using json = nlohmann::json;

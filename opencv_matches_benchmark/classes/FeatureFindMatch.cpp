@@ -90,6 +90,7 @@ bool FeatureFindMatch::keypoint_area_check_(vector<Mat> inc_images) {
 		desired_rectangle_.columns = 0;
 		desired_rectangle_.rows = 0;
 	}
+	return true;
 }
 
 void FeatureFindMatch::match_features_(const vector<Mat> inc_images, const vector<ImageFeatures> image_features_) {

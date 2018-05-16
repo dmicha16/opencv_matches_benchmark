@@ -1,8 +1,6 @@
 #pragma once
 #include "Wrapper.h"
 #include "RoiCalculator.h"
-#include "Stitcher.h"
-#include "Warping.h"
 
 typedef struct ImageData {
 	Mat img_1, img_2;

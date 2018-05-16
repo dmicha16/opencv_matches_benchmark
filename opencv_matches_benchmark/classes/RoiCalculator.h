@@ -43,8 +43,7 @@ typedef struct RowDefiner {
 	Point2f top_left;
 };
 
-typedef struct MatchedKeyPoint {
-	vector<Point2f> image_1;
+typedef struct KeyPointList {
 	vector<Point2f> image_2;
 };
 
@@ -56,10 +55,6 @@ typedef struct Rectengales {
 	void desginate_rectangles(int desired_rect);
 	void populate_rectangles(int height_offset, int desired_cols);
 	void reset_rectangles();
-};
-
-typedef struct KeyPointList {
-	vector<Point2f> image_2;
 };
 
 typedef enum RectangleCases { PER16 = 0, PER32 = 1, PER48 = 2, PER64 = 3, PER80 = 4 };

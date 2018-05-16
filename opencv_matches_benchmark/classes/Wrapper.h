@@ -43,6 +43,11 @@ using namespace cv::detail;
 #define LOG(msg) std::cout << msg
 #define LOGLN(msg) std::cout << msg << std::endl
 
+typedef struct MatchedKeyPoint {
+	vector<Point2f> image_1;
+	vector<Point2f> image_2;
+};
+
 class Wrapper {
 public:
 	INIT_CLOGGING;

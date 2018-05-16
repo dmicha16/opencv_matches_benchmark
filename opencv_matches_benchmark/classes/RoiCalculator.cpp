@@ -1,11 +1,5 @@
 #include "RoiCalculator.h"
 
-struct SortOperator {
-	bool operator() (int i, int j) {
-		return (i > j);
-	}
-} sort_operator_;
-
 RoiCalculator::RoiCalculator() {
 }
 
@@ -182,10 +176,10 @@ vector<KeyPointList> RoiCalculator::sort_keypoints_list_(vector<KeyPointList> in
 
 		int counter = 0;
 		for (int j = i; j < temp_list.size(); j++) {
-			/*if (temp_list[j].image_2.size() > temp_point_holder ) {
+			if (temp_list[j].image_2.size() > temp_point_holder.size() ) {
 				temp_point_holder = temp_list[j].image_2;
 				counter = j;		
-			}*/
+			}
 		}
 
 		iter_swap(temp_list.begin() + i, temp_list.begin() + counter);

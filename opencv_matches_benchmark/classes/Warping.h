@@ -1,6 +1,5 @@
 #pragma once
 #include "Wrapper.h"
-#include "FeatureFindMatch.h"
 
 class Warping :
 	public Wrapper {
